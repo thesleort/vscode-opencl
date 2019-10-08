@@ -2,7 +2,7 @@
     "name": "vscode-opencl",
     "displayName": "OpenCL",
     "description": "OpenCL for Visual Studio Code",
-    "version": "0.3.0",
+    "version": "0.6.0",
     "publisher": "galarius",
     "icon": "images/OpenCL_128x.png",
     "author": {
@@ -14,13 +14,17 @@
         "url": "https://github.com/Galarius/vscode-opencl"
     },
     "engines": {
-        "vscode": "^1.16.0"
+        "vscode": "^1.31.0"
     },
     "markdown": "github",
     "keywords": [
         "OpenCL",
-        "Khronos",
-        "cl"
+        "cl",
+        "ocl",
+        "kernel",
+        "compiler",
+        "highlighting",
+        "completion"
     ],
     "categories": [
         "Programming Languages",
@@ -31,7 +35,8 @@
         "onLanguage:opencl",
         "onLanguage:c",
         "onLanguage:cpp",
-        "onCommand:opencl.info"
+        "onCommand:opencl.info",
+        "onCommand:workbench.action.tasks.runTask"
     ],
     "main": "./out/src/extension",
     "contributes": {
@@ -79,26 +84,79 @@
         ],
         "configuration": {
             "type": "object",
-            "title": "OpenCL Configuration",
+            "title": "OpenCL",
             "properties": {
-                "opencl.formatting.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Enable/Disable code formatting for OpenCL (Restart is required)."
-                },
                 "opencl.formatting.name": {
                     "type": "string",
-                    "default": "astyle",
-                    "description": "The file name of the formatting utility.\nShould be available at $PATH, otherwise specify full file name."
+                    "default": "clang-format",
+                    "description": "The file name of the formatting utility. Should be available at $PATH, otherwise specify the full file name. Default value is 'clang-format' which is shipped with 'ms-vscode.cpptools' extension."
                 },
-                "opencl.formatting.args": {
+                "opencl.formatting.options": {
                     "type": "array",
-                    "default": [ 
-                        "-n" ],
-                    "description": "Command line arguments for formatting utility.\nUse variable ${workspaceRoot} to specify configuration file in a workspace \n(e.g. `--options=${workspaceRoot}/.astylerc` for Artistic Style)."
+                    "default": [],
+                    "description": "Command line arguments for a formatting utility. Options are ommited if default 'clang-format' utility is used. In this case create '.clang-format' file in the root of the project to override default options. If other utility is specified (e.g. astyle) provide a list of arguments. Use variable ${workspaceRoot} to specify configuration file in a workspace (e.g. '--options=${workspaceRoot}/.astylerc' for Artistic Style)."
                 }
             }
-        }
+        },
+        "taskDefinitions": [
+            {
+                "type": "opencl",
+                "required": [
+                    "label",
+                    "command"
+                ],
+                "properties": {
+                    "label": {
+                        "type": "string",
+                        "description": "Task name"
+                    },
+                    "command": {
+                        "type": "string",
+                        "description": "The offline compiler command"
+                    },
+                    "args": {
+                        "type": "array",
+                        "description": "The offline compiler command-line arguments"
+                    },
+                    "osx": {
+                        "type": "object",
+                        "description": "Overrides for macOS"
+                    },
+                    "linux": {
+                        "type": "object",
+                        "description": "Overrides for Linux"
+                    },
+                    "windows": {
+                        "type": "object",
+                        "description": "Overrides for Windows"
+                    }
+                }
+            }
+        ],
+        "problemMatchers": [
+            {
+                "name": "opencl.common",
+                "owner": "opencl",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):(\\d+): ((fatal )?error|warning|Scholar): (.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 6
+                }
+            },
+            {
+                "name": "opencl.openclc",
+                "owner": "opencl",
+                "pattern": {
+                    "regexp": "^openclc: (error|warning): (.*)$",
+                    "severity": 1,
+                    "message": 2
+                }
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "tsc -p ./",
@@ -106,12 +164,13 @@
         "postinstall": "node ./node_modules/vscode/bin/install"
     },
     "devDependencies": {
-        "@types/node": "^7.0.56",
-        "typescript": "^2.7.2",
-        "vscode": "^1.1.12"
+        "@types/node": "^8.10.49",
+        "typescript": "^3.5.1",
+        "vscode": "^1.1.34"
     },
     "dependencies": {
         "child-process-promise": "^1.1.0",
-        "hoek": "^5.0.3"
+        "hoek": "^5.0.4",
+        "querystringify": "^2.0.0"
     }
 }
